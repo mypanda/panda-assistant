@@ -1,6 +1,7 @@
 # panda-assistant
 This is an assistant for your chrome
 
+```
 "page_action":{
   "default_icon":{
     "24":"images/panda-24.png",
@@ -18,3 +19,4 @@ This is an assistant for your chrome
     "scripts/devtools-page.js"
   ]
 },
+```

@@ -58,11 +58,49 @@ function sendNotification(title,options){
   }
 }
 
-// 
-const ID = window.chrome.runtime.id
-window[ID] = {
-  sendNotification
+if (!Date.prototype.format){
+  function formatTimestamp(timestamp, format = 'YYYY/MM/DD hh:mm:ss') {
+    let time = Number.parseInt(timestamp, 10);
+    let date = new Date(time);
+
+    let year = date.getFullYear();
+    let month = date.getMonth() + 1;
+    let day = date.getDate();
+    let hour = date.getHours();
+    let minute = date.getMinutes();
+    let second = date.getSeconds();
+
+    month = month > 9 ? month : `0${month}`;
+    day = day > 9 ? day : `0${day}`;
+    hour = hour > 9 ? hour : `0${hour}`;
+    minute = minute > 9 ? minute : `0${minute}`;
+    second = second > 9 ? second : `0${second}`;
+
+    return format
+      .replace('YYYY', year)
+      .replace('MM', month)
+      .replace('DD', day)
+      .replace('hh', hour)
+      .replace('mm', minute)
+      .replace('ss', second);
+  }
+  Date.prototype.format = function (format) {
+    if(typeof this === 'number'){
+      return formatTimestamp(this, format)
+    } else if (typeof this === 'object'){
+      return formatTimestamp(+this, format)
+    }
+    return this
+  }
 }
+if(!Date.prototype.fullTime){
+  Date.prototype.fullTime = function () {
+    return (new Date()).format()
+  }
+}
+
+
+// window.chrome.runtime.id
 
 function jump(target){
   const params = parseParams(getHref().split("?")[1]);
@@ -99,48 +137,96 @@ const matchs = [
     type:'ready',
     url: new RegExp(".*", "i"),
     operate: function(){
-      function getTime(){
-        let time = new Date()
-        // if(time.getMinutes() === 0 && time.getSeconds() === 0){
-        //   console.log("ding~~")
-        // }
-        if(time.getSeconds() === 0){
-          console.log("ding~~")
+      class Alarm{
+        constructor(){
+          // this.TIMEOUT = 5 * 60 * 1000
+          this.TIMEOUT = 0.5 * 60 * 1000
+          this.RIGHT = 10
+          this._timeout = 0
+          this._timer = 0
+        }
+        start(){
+          this.$box = $(`<div class="PANDA_ALARM"></div>`)
+          this.$alarm = $(`<div class="ALARM">${new Date().fullTime()}</div>`)
+          this.$text = $(`<span>是时候喝水了额~</span>`)
+          this.$box.append(this.$alarm)
+          this.$box.append(this.$text)
+
+          this._timer = setInterval(_=> {
+            this.$alarm.text(new Date().fullTime())
+          }, 1000)
+          this._timeout = setTimeout(() => {
+            clearTimeout(this._timeout)
+            this.close()
+          }, this.TIMEOUT);
+          $('body').append(this.$box)
+          this.$box.animate({
+            right: this.RIGHT + 'px'
+          }, 1000, _=>{
+            // console.log("动画执行完毕!");
+          })
+        }
+        close(){
+          this.$box && this.$box.animate({
+            right: -(this.$box.outerWidth()+10) + 'px'
+          }, 1000, _ => {
+            clearInterval(this._timer)
+            this.$box.remove()
+          })
+        }
+        setup(){
+          this.env()
+          setInterval(_ => {
+            let time = new Date()
+            if (time.getSeconds() === 0) {
+              this.start()
+            }
+            // if (time.getMinutes() === 0 && time.getSeconds() === 0) {
+            //   this.start()
+            // }
+          }, 1000)
+        }
+        env(){
+          const text = `
+            .PANDA_ALARM{
+              box-sizing:border-box;
+              position: fixed;
+              margin-bottom: 16px;
+              margin-left: auto;
+              padding: 16px 24px;
+              overflow: hidden;
+              line-height: 1.5715;
+              word-wrap: break-word;
+              background-color: #fff;
+              border-radius: 2px;
+              box-shadow: 0 3px 6px -4px #0000001f, 0 6px 16px #00000014, 0 9px 28px 8px #0000000d;
+              z-index: 10000;
+              width: 300px;
+              font-size:20px;
+              right: -210px;
+              top: 24px;
+              bottom: auto;
+              color:red;
+            }
+          `
+          let $style = $('<style></style>')
+          $style.text(text)
+          $('body').append($style)
         }
       }
-      let timer = setInterval(()=>{
-        console.log('aaa')
-        getTime()
-      },1000)
-      
-      let $pop = $('<div>HAHA</div>')
-      $pop.css({
-        width:'200px',
-        height:'100px',
-        position:'fixed',
-        // right:'-210px',
-        right:'10px',
-        top:'100px',
-        backgroundColor:'red',
-        opacity:'0',
-        zIndex:'99999'
-      })
-      $('body').append($pop)
-      $pop.animate({right:'10px',opacity:'1'}, 2000, function() {
-        console.log("动画 fontSize执行完毕!");
-      })
+      new Alarm().setup()
     }
   },
   {
     name:'**',
     type:'load',
     url: [new RegExp("blog.csdn.net", "i"), new RegExp("jianshu.com", "i")],
-    operate: `
-      var loop = function(func){
+    operate: function() {
+      var loop = function (func) {
         var loop_time = 10;
-        func.interval = setInterval(function(){
-          if (func.time){
-            if (func.time >= loop_time){
+        func.interval = setInterval(function () {
+          if (func.time) {
+            if (func.time >= loop_time) {
               clearInterval(func.interval);
               return 0;
             }
@@ -148,80 +234,82 @@ const matchs = [
           } else {
             func.time = 1;
           }
-          if (func()){
+          if (func()) {
             clearInterval(func.interval);
             return 0;
           }
         }, 500);
       };
-      var main = function(){
-        Array.prototype.forEach.call(document.getElementsByTagName("*"), function(el) {
+      var main = function () {
+        Array.prototype.forEach.call(document.getElementsByTagName("*"), function (el) {
           ["user-select", "-webkit-user-select", "-moz-user-select", "-ms-user-select"].forEach(xcanwin => {
             var filterstyle = document.defaultView.getComputedStyle(el, null)[xcanwin];
             if (filterstyle && filterstyle == 'none') {
               el.style = xcanwin + ": text !important";
             }
           });
-    
+
           ["onselect", "onselectstart", "oncopy", "onbeforecopy", "oncontextmenu"].forEach(xcanwin => {
-            el[xcanwin] = function(e) {
+            el[xcanwin] = function (e) {
               e.stopImmediatePropagation();
             }
           });
         });
       };
       loop(main);
-    `,
+    }
   },
   {
     name:'zhihu',
     type:'load',
     url: [new RegExp("zhihu.com/question", "i"),new RegExp('zhuanlan.zhihu.com','i')],
-    operate: `
-      document.querySelectorAll('.Button.Modal-closeButton.Button--plain').forEach(i=>{
+    operate: function() {
+      document.querySelectorAll('.Button.Modal-closeButton.Button--plain').forEach(i => {
         if (i) i.click()
       })
-    `
+    }
   },
   {
     name:'jianshu',
     type:'load',
     url:new RegExp("jianshu.com/p", "i"),
-    operate: `
-      document.querySelectorAll('button').forEach(i=>{
-        if(i.textContent === '阅读全文'){
+    operate: function() {
+      document.querySelectorAll('button').forEach(i => {
+        if (i.textContent === '阅读全文') {
           i.click()
         }
       })
-    `
+    }
   },
   {
     name:'baiduAd',
     type:'load',
     url:new RegExp("baidu.com/s", "i"),
     description:'去除百度广告，根据#content_left盒子下不带className',
-    operate: `
-      console.log(this)
-      const children = document.querySelector('#content_left').children
-      for(let i=0;i< children.length;i++){
-        if(children[i].className === ''){
-          children[i].remove()
+    operate: function () {
+      const leftContent = document.querySelector('#content_left')
+      if (leftContent) {
+        const children = leftContent.children
+        for (let i = 0; i < children.length; i++) {
+          if (children[i].className === '') {
+            children[i].remove()
+          }
         }
       }
-    `
+    }
   },
   {
     name:'csdn',
     type:'load',
     url:new RegExp("blog.csdn.net/.*/article/details", "i"),
     description:'关注博主展开全文',
-    operate:`
+    operate:function() {
       let follow = document.querySelector('#btn-readmore-zk')
-      if(follow){
-        document.querySelector('#article_content').style.height='auto'
+      if (follow) {
+        document.querySelector('#article_content').style.height = 'auto'
         follow.parentNode.remove()
       }
-    `
+    }
   }
 ];
 

@@ -21,11 +21,16 @@
     ]
   },
   "devtools_page": "html/devtools-page.html",
+  "options_page": "html/index.html",
+  "options_ui": {
+    "open_in_tab": true,
+    "page": "html/index.html"
+  },
   "content_scripts": [
     {
       "matches":["<all_urls>"],
-      "js":["scripts/libs/jquery.min.js","scripts/else-insert.js"],
-      "css": ["styles/else-insert.css"],
+      "js":["scripts/libs/jquery.min.js","scripts/content-scripts.js"],
+      "css": ["styles/content-scripts.css"],
       "run_at": "document_start"
     }
   ],
