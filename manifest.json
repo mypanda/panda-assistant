@@ -1,0 +1,45 @@
+{
+  "manifest_version": 2, 
+  "name": "panda-assistant",
+  "version": "1.0.0",
+  "description": "This is an assistant for your chrome", 
+  "icons": {
+    "16": "images/panda-16.png",
+    "48": "images/panda-48.png",
+    "128": "images/panda-128.png"
+  },
+  "browser_action": {
+    "default_icon": "images/panda-16.png",
+    "default_title": "Hello Panda",
+    "default_popup": "html/popup.html"
+  }, 
+  "author": "mypanda@github.com",
+  "background": {
+    "scripts": [
+      "scripts/background.js",
+      "scripts/devtools-page.js"
+    ]
+  },
+  "devtools_page": "html/devtools-page.html",
+  "content_scripts": [
+    {
+      "matches":["<all_urls>"],
+      "js":["scripts/libs/jquery.min.js","scripts/else-insert.js"],
+      "css": ["styles/else-insert.css"],
+      "run_at": "document_start"
+    }
+  ],
+  "default_locale": "zh_CN",
+  "permissions": [
+    "cookies",
+    "management",
+    "tabs",
+    "contextMenus",
+		"notifications",
+		"webRequest",
+		"webRequestBlocking",
+		"storage",
+		"http://*/*",
+		"https://*/*"
+  ]
+}
