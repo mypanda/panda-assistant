@@ -139,8 +139,7 @@ const matchs = [
     operate: function(){
       class Alarm{
         constructor(){
-          // this.TIMEOUT = 5 * 60 * 1000
-          this.TIMEOUT = 0.5 * 60 * 1000
+          this.TIMEOUT = 5 * 60 * 1000
           this.RIGHT = 10
           this._timeout = 0
           this._timer = 0
@@ -178,12 +177,9 @@ const matchs = [
           this.env()
           setInterval(_ => {
             let time = new Date()
-            if (time.getSeconds() === 0) {
+            if (time.getMinutes() === 0 && time.getSeconds() === 0) {
               this.start()
             }
-            // if (time.getMinutes() === 0 && time.getSeconds() === 0) {
-            //   this.start()
-            // }
           }, 1000)
         }
         env(){
